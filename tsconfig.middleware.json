@@ -6,9 +6,14 @@
       "ES2023",
       "DOM"
     ],
-    "module": "ESNext",
+    // Vercel compiles middleware file-by-file and ships the .js files for the
+    // Edge runtime to resolve at run time — it does not bundle. So this project
+    // resolves modules the way that compile does (node16) rather than the way
+    // the app's bundler does: a relative import without its `.js` fails here
+    // (TS2835) instead of at 3am on the deployment. See /middleware.ts.
+    "module": "node16",
     "skipLibCheck": true,
-    "moduleResolution": "bundler",
+    "moduleResolution": "node16",
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "moduleDetection": "force",

@@ -243,16 +243,29 @@ Three rules it exists to keep:
 it into `tsc -b`. Keep it referenced from `tsconfig.json` or the one file gating
 the production homepage stops being type-checked.
 
-A fourth rule, and the reason `middleware.test.ts` exists: **middleware runs on
-the Edge runtime, so nothing it imports may touch a Node global.** Importing
-`next` from the `@vercel/functions` root rather than `@vercel/functions/middleware`
-dragged in the package's Node-runtime helpers, one of which reads `process.env`
-as its module is evaluated — which throws while the middleware is being *loaded*,
-so every request to "/" 500'd with `MIDDLEWARE_INVOCATION_FAILED`, not just the
-ones asking for RDF. Type checking cannot see that, and a unit test in Node
-cannot either, so `middleware.test.ts` bundles the real file and evaluates it in
-an Edge sandbox with no `process` in it. The handler also falls back to the app
-if negotiation throws: the description is optional, the homepage is not.
+Two more rules come from the deployment rather than the spec, and both were paid
+for: the first production deploy answered **every** request to "/" with
+`500 MIDDLEWARE_INVOCATION_FAILED` — not only the ones asking for RDF, because
+what fails is loading the module, before the handler is ever called.
+
+- **Relative imports in the middleware's module graph need an explicit `.js`.**
+  Vercel does not bundle middleware. It compiles each `.ts` file to a `.js` file
+  beside it, ships them, and lets the Edge runtime resolve the imports at run
+  time — where `./src/capability/negotiate` resolves to nothing. So
+  `tsconfig.middleware.json` uses `node16` module resolution, the same as
+  Vercel's compile, and `npm run typecheck` fails with the same `TS2835` the
+  build log shows rather than leaving it to the deployment. This is why
+  `negotiate.ts` imports `./document.js`; Vite and vitest resolve the `.js`
+  specifier back to the `.ts` without caring.
+- **Nothing the middleware imports may touch a Node global.** `next` comes from
+  `@vercel/functions/middleware`, not the package root: the root re-exports the
+  whole package, including helpers written for the Node.js runtime, and one of
+  those reads `process.env` as its module is evaluated. Type checking cannot see
+  that, so `middleware.test.ts` bundles the real file and runs it in an Edge
+  sandbox with no `process` in it.
+
+The handler also falls back to serving the app if negotiation throws: the
+description is optional, the homepage is not.
 
 ## Pull Requests
 
