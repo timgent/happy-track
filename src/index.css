@@ -1,0 +1,317 @@
+@import "tailwindcss";
+
+/*
+ * Dark mode follows a class on <html> rather than the media query, so a theme
+ * the user picked outlives the OS setting. ThemeContext puts the class there;
+ * the inline script in index.html gets it there before the first paint.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Primary — Amber. The app's warmth: sunlight, the good thing that happened. */
+  --color-primary-950: #451a03;
+  --color-primary-900: #78350f;
+  --color-primary-800: #92400e;
+  --color-primary-700: #b45309;
+  --color-primary-600: #d97706;
+  --color-primary-500: #f59e0b;
+  --color-primary-400: #fbbf24;
+  --color-primary-300: #fcd34d;
+  --color-primary-200: #fde68a;
+  --color-primary-100: #fef3c7;
+  --color-primary-50: #fffbeb;
+
+  /* Accent — Violet. The evening half of the palette: the nav, and the quiet
+     surfaces that sit behind the warm ones. */
+  --color-accent-950: #2e1065;
+  --color-accent-900: #4c1d95;
+  --color-accent-800: #5b21b6;
+  --color-accent-700: #6d28d9;
+  --color-accent-600: #7c3aed;
+  --color-accent-500: #8b5cf6;
+  --color-accent-400: #a78bfa;
+  --color-accent-300: #c4b5fd;
+  --color-accent-200: #ddd6fe;
+  --color-accent-100: #ede9fe;
+  --color-accent-50: #f5f3ff;
+
+  /* Secondary — Rose. For the streak and the celebrations. */
+  --color-secondary-950: #4c0519;
+  --color-secondary-900: #881337;
+  --color-secondary-800: #9f1239;
+  --color-secondary-700: #be123c;
+  --color-secondary-600: #e11d48;
+  --color-secondary-500: #f43f5e;
+  --color-secondary-400: #fb7185;
+  --color-secondary-300: #fda4af;
+  --color-secondary-200: #fecdd3;
+  --color-secondary-100: #ffe4e6;
+  --color-secondary-50: #fff1f2;
+
+  /* Success — Green */
+  --color-success-950: #052e16;
+  --color-success-900: #14532d;
+  --color-success-800: #166534;
+  --color-success-700: #15803d;
+  --color-success-600: #16a34a;
+  --color-success-500: #22c55e;
+  --color-success-400: #4ade80;
+  --color-success-300: #86efac;
+  --color-success-200: #bbf7d0;
+  --color-success-100: #dcfce7;
+  --color-success-50: #f0fdf4;
+
+  /* Warning — Yellow */
+  --color-warning-900: #713f12;
+  --color-warning-800: #854d0e;
+  --color-warning-700: #a16207;
+  --color-warning-600: #ca8a04;
+  --color-warning-500: #eab308;
+  --color-warning-400: #facc15;
+  --color-warning-300: #fde047;
+  --color-warning-200: #fef08a;
+  --color-warning-100: #fef9c3;
+  --color-warning-50: #fefce8;
+
+  /* Danger — Red */
+  --color-danger-950: #450a0a;
+  --color-danger-900: #7f1d1d;
+  --color-danger-800: #991b1b;
+  --color-danger-700: #b91c1c;
+  --color-danger-600: #dc2626;
+  --color-danger-500: #ef4444;
+  --color-danger-400: #f87171;
+  --color-danger-300: #fca5a5;
+  --color-danger-200: #fecaca;
+  --color-danger-100: #fee2e2;
+  --color-danger-50: #fef2f2;
+
+  /* Decorative gradients. Bright on purpose: a progress fill is something
+     nobody reads words off, and it answers to the 3:1 non-text rule. */
+  --background-image-gradient-primary: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  --background-image-gradient-accent: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+  --background-image-gradient-sunrise: linear-gradient(135deg, #f59e0b 0%, #f43f5e 55%, #7c3aed 100%);
+
+  /* The same ramps dropped to the shades that can carry white text. White on
+     `#f59e0b` is 2.15:1 and on `#d97706` 3.19:1 — a filled button's label is
+     14px semibold, which WCAG counts as small text and holds to 4.5:1. These
+     start at 5.02:1 and 6.06:1 and darken from there. */
+  --background-image-gradient-primary-button: linear-gradient(135deg, #b45309 0%, #92400e 100%);
+  --background-image-gradient-accent-button: linear-gradient(135deg, #6d28d9 0%, #5b21b6 100%);
+
+  /* Box shadows — the `--shadow-*` namespace is what Tailwind v4 turns into
+     `shadow-soft`, `shadow-glow-primary`, … utilities. */
+  --shadow-soft: 0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04);
+  --shadow-glow-primary: 0 0 20px rgba(245, 158, 11, 0.4);
+  --shadow-glow-accent: 0 0 20px rgba(139, 92, 246, 0.4);
+
+  /* Entrance animations, used as `animate-slide-up` etc. Keyframes live in the
+     same @theme block so Tailwind only emits the ones actually used. */
+  --animate-slide-up: slideUp 0.3s ease-out;
+  --animate-slide-down: slideDown 0.3s ease-out;
+  --animate-fade-in: fadeIn 0.3s ease-in;
+  --animate-pop-in: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  @keyframes slideUp {
+    0% { transform: translateY(10px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+  }
+
+  @keyframes slideDown {
+    0% { transform: translateY(-10px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+  }
+
+  @keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+
+  @keyframes popIn {
+    0% { transform: scale(0.6); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+}
+
+body {
+  overscroll-behavior: none;
+}
+
+/*
+ * The page's own ground colour, painted before React mounts. Without it the
+ * browser — and the Capacitor WebView especially — shows white while the bundle
+ * loads, which is the flash the pre-paint script in index.html exists to avoid.
+ */
+html {
+  background-color: #fffbeb;
+}
+
+html.dark {
+  background-color: #030712;
+}
+
+/*
+ * Device insets for the top (status bar) and bottom (gesture bar).
+ *
+ * The nav and footer only need to reserve that room when the app actually
+ * paints underneath those bars — the native shell, or an installed PWA. In an
+ * ordinary browser tab the browser's own chrome already sits outside the page,
+ * yet Chrome on Android still reports non-zero insets with viewport-fit=cover.
+ */
+.safe-area-top { padding-top: 0; }
+.safe-area-bottom { padding-bottom: 0; }
+
+@media (display-mode: standalone), (display-mode: fullscreen), (display-mode: minimal-ui) {
+  .safe-area-top { padding-top: env(safe-area-inset-top); }
+  .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
+}
+
+.native-app .safe-area-top { padding-top: env(safe-area-inset-top); }
+.native-app .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
+
+/* ── Writing a happy ──────────────────────────────────────────────────────────
+   Saving is the move this app exists for and the one the user repeats every
+   day, so it gets a beat of acknowledgement: the new card arrives with a little
+   overshoot rather than simply being there. Kept in step with SAVE_FLOURISH_MS
+   in HappyComposer.tsx. */
+@keyframes happy-card-arrive {
+  0% { opacity: 0; transform: translateY(14px) scale(0.96); }
+  65% { opacity: 1; transform: translateY(-3px) scale(1.01); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.happy-card-arriving {
+  animation: happy-card-arrive 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* The streak number, when it goes up. One element moving on its own is what
+   makes the increment feel earned rather than merely rendered. */
+@keyframes streak-bump {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.35) rotate(-6deg); }
+  70% { transform: scale(0.95) rotate(3deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+.streak-bumping {
+  animation: streak-bump 0.5s ease-out both;
+}
+
+/* ── Milestone celebration ───────────────────────────────────────────────────
+   Only for a streak milestone (3, 7, 14, 30 … days), never for an ordinary
+   save. A celebration that happens every day is wallpaper. */
+@keyframes celebration-rise-in {
+  0% { transform: translateY(40px) scale(0.96); opacity: 0; }
+  60% { transform: translateY(-6px) scale(1.02); opacity: 1; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.celebration-banner {
+  animation: celebration-rise-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes celebration-shimmer {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.celebration-bg {
+  background: linear-gradient(135deg, #b45309, #be123c, #6d28d9, #b45309);
+  background-size: 300% 300%;
+  animation: celebration-shimmer 6s ease infinite;
+}
+
+@keyframes confetti-fall {
+  0% { transform: translateY(-10vh) rotate(0deg); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+}
+
+.confetti-piece {
+  position: absolute;
+  top: 0;
+  font-size: 1.5rem;
+  animation: confetti-fall 3s ease-in forwards;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ── Waiting ─────────────────────────────────────────────────────────────────
+   Waiting should still feel like the app: a sun rocking gently above a skeleton
+   of the content that's on its way. */
+@keyframes loading-sun-rock {
+  0%, 100% { transform: translateY(0) rotate(-8deg); }
+  50% { transform: translateY(-5px) rotate(8deg); }
+}
+
+.loading-sun {
+  display: inline-block;
+  animation: loading-sun-rock 1.5s ease-in-out infinite;
+}
+
+@keyframes loading-skeleton-sweep {
+  0% { background-position: 150% 0; }
+  100% { background-position: -50% 0; }
+}
+
+.loading-skeleton-bar {
+  background-color: #e7e5e4;
+  background-image: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.85) 50%, transparent 100%);
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  animation: loading-skeleton-sweep 1.6s ease-in-out infinite;
+}
+
+.dark .loading-skeleton-bar {
+  background-color: #1f2937;
+  background-image: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.12) 50%, transparent 100%);
+}
+
+/* Bars grow to their height, so a chart reads as being drawn rather than as
+   having always been that shape. */
+.chart-bar-grow {
+  transition: height 0.5s ease, width 0.5s ease;
+}
+
+/*
+ * Motion guard: decorative animation is neutralised for anyone who asks for
+ * reduced motion. Anything that reveals content over time must additionally
+ * check prefersReducedMotion() and skip to the end state.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .celebration-banner,
+  .celebration-bg,
+  .happy-card-arriving,
+  .streak-bumping,
+  .loading-sun,
+  .animate-pop-in {
+    animation: none;
+  }
+
+  /* Falling confetti is the one piece with nothing to say when it can't move */
+  .confetti-piece {
+    display: none;
+  }
+
+  /* The placeholder bars stay — they just stop sweeping */
+  .loading-skeleton-bar {
+    animation: none;
+    background-image: none;
+  }
+
+  /* The bar still has to reach the right size — it just gets there at once */
+  .chart-bar-grow {
+    transition: none;
+  }
+}
