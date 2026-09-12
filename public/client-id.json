@@ -1,0 +1,15 @@
+{
+  "@context": "https://www.w3.org/ns/solid/oidc-context.jsonld",
+  "client_id": "https://happytrack.tim-gent.com/client-id.json",
+  "redirect_uris": [
+    "https://happytrack.tim-gent.com/",
+    "https://localhost/"
+  ],
+  "client_name": "Happy Track",
+  "client_uri": "https://happytrack.tim-gent.com/",
+  "scope": "openid offline_access webid",
+  "grant_types": [
+    "refresh_token",
+    "authorization_code"
+  ]
+}

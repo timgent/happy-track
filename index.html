@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <!-- The nav is the same deep plum in both themes, so the browser and native
+       shells get one colour rather than a pair that would have to be kept in
+       step with the theme. -->
+  <meta name="theme-color" content="#2e1065" />
+  <title>Happy Track</title>
+  <meta name="description"
+    content="Write down one happy thing each day. Your entries live in your own Solid Pod, and the app works offline." />
+  <!--
+    Applies the theme before the first paint, so the page never flashes light
+    then swaps to dark. It has to be inline and synchronous to beat the paint;
+    localStorage can throw outright in a cookie-blocked or sandboxed context,
+    so the whole thing is guarded and simply falls back to the OS preference.
+    Kept in step with src/components/ThemeContext.tsx (same storage key).
+  -->
+  <script>
+    (function () {
+      var theme = null;
+      try {
+        var stored = localStorage.getItem('theme');
+        if (stored === 'light' || stored === 'dark') theme = stored;
+      } catch (e) { /* storage unavailable — fall back to the OS */ }
+      try {
+        if (!theme) {
+          theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        document.documentElement.classList.toggle('dark', theme === 'dark');
+        document.documentElement.style.colorScheme = theme;
+      } catch (e) { /* never let the theme break the page */ }
+    })();
+  </script>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
+</html>
