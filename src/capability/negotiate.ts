@@ -16,7 +16,10 @@
  *   more likely to be a link-preview bot or an SDK default than a deliberate
  *   ask for RDF, and the cost of getting it wrong is a blank page for a human.
  */
-import { capabilityDescription } from './document'
+// The `.js` is load-bearing: this module is compiled and shipped to Vercel's
+// Edge runtime unbundled, so the specifier has to name the file that is there.
+// See /middleware.ts.
+import { capabilityDescription } from './document.js'
 
 const JSONLD_TYPE = 'application/ld+json'
 const TURTLE_TYPE = 'text/turtle'
