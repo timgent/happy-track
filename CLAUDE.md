@@ -243,6 +243,17 @@ Three rules it exists to keep:
 it into `tsc -b`. Keep it referenced from `tsconfig.json` or the one file gating
 the production homepage stops being type-checked.
 
+A fourth rule, and the reason `middleware.test.ts` exists: **middleware runs on
+the Edge runtime, so nothing it imports may touch a Node global.** Importing
+`next` from the `@vercel/functions` root rather than `@vercel/functions/middleware`
+dragged in the package's Node-runtime helpers, one of which reads `process.env`
+as its module is evaluated — which throws while the middleware is being *loaded*,
+so every request to "/" 500'd with `MIDDLEWARE_INVOCATION_FAILED`, not just the
+ones asking for RDF. Type checking cannot see that, and a unit test in Node
+cannot either, so `middleware.test.ts` bundles the real file and evaluates it in
+an Edge sandbox with no `process` in it. The handler also falls back to the app
+if negotiation throws: the description is optional, the homepage is not.
+
 ## Pull Requests
 
 When raising a PR that addresses a GitHub issue, always reference the issue in
