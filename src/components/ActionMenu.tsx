@@ -1,5 +1,5 @@
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
-import type { ReactNode } from 'react'
+import type { ReactNode, Ref } from 'react'
 
 /**
  * The actions a page has but rarely needs, behind one control.
@@ -16,16 +16,24 @@ import type { ReactNode } from 'react'
  * Escape, outside-click, focus returned to the trigger — none of which a
  * hand-rolled panel of buttons gets for free.
  */
-export function ActionMenu({ label, children }: {
+export function ActionMenu({ label, children, triggerRef }: {
     /** What the trigger is, for the people who cannot see three dots. */
     label: string
     /** `ActionMenuItem`s. */
     children: ReactNode
+    /**
+     * The trigger button itself. Radix returns focus here when the menu is
+     * dismissed, but an item that replaces the trigger's own card — Edit, which
+     * swaps in an editor — leaves nothing to return to, so the caller needs a
+     * handle on it to put focus back afterwards.
+     */
+    triggerRef?: Ref<HTMLButtonElement>
 }) {
     return (
         <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
                 <button
+                    ref={triggerRef}
                     type="button"
                     aria-label={label}
                     title={label}

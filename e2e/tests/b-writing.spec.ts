@@ -165,3 +165,43 @@ test.describe('The journal, signed in', () => {
         await expect(page.getByText(/nothing written in march/i)).toBeVisible()
     })
 })
+
+/**
+ * Editing on a phone, where the old layout failed hardest.
+ *
+ * The editor used to render at the top of the journal, above every day group,
+ * wherever the card being edited happened to be — so on a page as long as the
+ * user's history it opened off-screen. And because the composer deliberately
+ * declines to autofocus on a phone, nothing scrolled to it either: tapping Edit
+ * looked like tapping a dead button.
+ *
+ * Last in the file, and on its own viewport, because it writes several happies
+ * and the tests above count what is on the page.
+ */
+test.describe('Editing on a small screen', () => {
+    test.beforeAll(async () => {
+        await page.setViewportSize({ width: 390, height: 500 })
+    })
+
+    test.afterAll(async () => {
+        await page.setViewportSize({ width: 1280, height: 720 })
+    })
+
+    test('opens the editor where the card is, in view and ready to type', async () => {
+        await openToday()
+
+        // Enough to push the last card below the fold on a phone.
+        for (const text of ['Long enough journal one', 'Long enough journal two', 'Long enough journal three']) {
+            await writeHappy(page, text)
+        }
+
+        await openJournal('/#/journal')
+        const card = happyCards(page).last()
+        await expect(card).toBeVisible()
+        await happyAction(page, card, 'Edit')
+
+        const composer = page.getByTestId('happy-composer')
+        await expect(composer).toBeInViewport()
+        await expect(composerBox(page)).toBeFocused()
+    })
+})
