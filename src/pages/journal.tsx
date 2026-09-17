@@ -76,6 +76,10 @@ export function JournalPage() {
     const [query, setQuery] = useState(urlQuery)
     const [debouncedQuery] = useDebounce(query, SEARCH_DEBOUNCE_MS)
     const [editing, setEditing] = useState<Happy | null>(null)
+    // The happy whose card should take focus when it comes back. Editing swaps
+    // the card out for the composer, so the kebab that opened the editor is
+    // gone by the time the editor closes — see `HappyCard.focusActions`.
+    const [focusAfterEdit, setFocusAfterEdit] = useState<string | null>(null)
     const [pendingDelete, setPendingDelete] = useState<Happy | null>(null)
 
     // What we last wrote to the URL ourselves, so the effect below can tell a
@@ -116,6 +120,16 @@ export function JournalPage() {
     const knownTags = useMemo(() => tagCounts(months).map(entry => entry.tag), [months])
     const popularTags = useMemo(() => tagCounts(months).slice(0, 6), [months])
 
+    // The editor now lives inside the list, so a happy that a search or a month
+    // change filters out takes its editor with it. Closing it here rather than
+    // letting the state linger is what stops an editor nobody can see from
+    // reappearing, half-typed, when the filter is cleared again.
+    useEffect(() => {
+        if (editing && !results.some(candidate => candidate.id === editing.id)) {
+            setEditing(null)
+        }
+    }, [editing, results])
+
     const earliestMonth = months.find(candidate => candidate.happies.length > 0)?.month
 
     const clearFilters = () => {
@@ -137,10 +151,15 @@ export function JournalPage() {
         }, { replace: true })
     }
 
+    const closeEditor = () => {
+        setFocusAfterEdit(editing?.id ?? null)
+        setEditing(null)
+    }
+
     const handleEdit = async (draft: ComposerDraft) => {
         if (!editing) return
         await saveHappy(editedHappy(editing, draft))
-        setEditing(null)
+        closeEditor()
         showToast('Happy updated', 'success')
     }
 
@@ -242,21 +261,6 @@ export function JournalPage() {
 
             {isCheckingPod && results.length === 0 && <PodSyncIndicator />}
 
-            {editing && (
-                <div className="mb-5">
-                    <HappyComposer
-                        dateKey={editing.date}
-                        editing={editing}
-                        showMood={settings.moodEnabled}
-                        showPrompt={false}
-                        knownTags={knownTags}
-                        onSave={handleEdit}
-                        onCancel={() => setEditing(null)}
-                        autoFocus
-                    />
-                </div>
-            )}
-
             {dayGroups.length === 0 ? (
                 isSearching ? (
                     <Callout
@@ -306,12 +310,27 @@ export function JournalPage() {
                             <ul className="space-y-3">
                                 {group.happies.map(happy => (
                                     <li key={happy.id}>
-                                        <HappyCard
-                                            happy={happy}
-                                            onEdit={setEditing}
-                                            onDelete={setPendingDelete}
-                                            onTagClick={setTag}
-                                        />
+                                        {editing?.id === happy.id ? (
+                                            <HappyComposer
+                                                dateKey={happy.date}
+                                                editing={happy}
+                                                showMood={settings.moodEnabled}
+                                                showPrompt={false}
+                                                knownTags={knownTags}
+                                                onSave={handleEdit}
+                                                onCancel={closeEditor}
+                                                autoFocus
+                                            />
+                                        ) : (
+                                            <HappyCard
+                                                happy={happy}
+                                                onEdit={setEditing}
+                                                onDelete={setPendingDelete}
+                                                onTagClick={setTag}
+                                                focusActions={focusAfterEdit === happy.id}
+                                                onActionsFocused={() => setFocusAfterEdit(null)}
+                                            />
+                                        )}
                                     </li>
                                 ))}
                             </ul>

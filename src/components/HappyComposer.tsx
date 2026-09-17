@@ -45,10 +45,13 @@ interface HappyComposerProps {
  *   bother.
  * - **Save is never a mystery.** It is disabled with an explanation while the
  *   box is empty, rather than silently doing nothing.
- * - **Autofocus is opt-in, and off on phones.** Focusing a textarea on mount
- *   throws up the on-screen keyboard over the content the user was about to
- *   read, and scrolls the page to somewhere they did not ask to be. On a
- *   desktop, where focus costs nothing, the caller can turn it on.
+ * - **Autofocus is opt-in, and off on phones — unless this is an edit.** What
+ *   the rule is really about is a box that grabs the keyboard on the way past:
+ *   focusing on mount throws the on-screen keyboard over the content the user
+ *   was about to read, and scrolls the page somewhere they did not ask to be.
+ *   An edit is the opposite case. They asked for this box by name, it is where
+ *   they were already looking, and the keyboard is what they came for — so an
+ *   editing composer takes focus on every device.
  * - **⌘/Ctrl+Enter saves; plain Enter does not.** A happy is often more than
  *   one line, and a textarea that submits on Enter cannot hold a second one.
  */
@@ -71,6 +74,10 @@ export function HappyComposer({
     const textareaRef = useRef<HTMLTextAreaElement>(null)
     const textareaId = useId()
     const isDesktop = useIsDesktop()
+    // The boolean, not the happy: `editing` is a fresh object on any render
+    // that re-reads the month, and focusing on that would move the caret out
+    // from under someone mid-sentence every time the pod poll came back.
+    const isEditing = editing !== undefined
 
     const trimmed = text.trim()
     const canSave = trimmed.length > 0 && !isSaving
@@ -86,8 +93,15 @@ export function HappyComposer({
     }, [text])
 
     useEffect(() => {
-        if (autoFocus && isDesktop) textareaRef.current?.focus()
-    }, [autoFocus, isDesktop])
+        if (!autoFocus || !(isDesktop || isEditing)) return
+        const textarea = textareaRef.current
+        if (!textarea) return
+        textarea.focus()
+        // Caret at the end rather than the start: an edit is usually something
+        // to add, and landing before the first character means every edit
+        // begins by getting out of the way of the caret.
+        textarea.setSelectionRange(textarea.value.length, textarea.value.length)
+    }, [autoFocus, isDesktop, isEditing])
 
     const submit = async () => {
         if (!canSave) return

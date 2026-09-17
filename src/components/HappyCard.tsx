@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline'
 import { ActionMenu, ActionMenuItem } from './ActionMenu'
 import { moodFor } from '../happies/types'
@@ -11,6 +12,17 @@ interface HappyCardProps {
     isNew?: boolean
     /** Turns a tag into a link into the journal, when the page has one to offer. */
     onTagClick?: (tag: string) => void
+    /**
+     * Takes focus on mount, onto the actions button.
+     *
+     * Set by a page handing focus back after this card's own editor closed:
+     * editing replaces the card with the composer, so the button focus came
+     * from no longer exists by the time the editor is done with it, and without
+     * this focus lands on `<body>` and a keyboard user starts the list again.
+     */
+    focusActions?: boolean
+    /** Called once focus has been taken, so the caller can stop asking. */
+    onActionsFocused?: () => void
 }
 
 /** The time a happy was written, in the reader's own locale. */
@@ -37,9 +49,24 @@ function timeOf(createdAt: string): string {
  * to happen on a phone. `ActionMenu` is a real Radix `role="menu"`, so it comes
  * with roving arrow-key focus, Escape, outside-click and focus return.
  */
-export function HappyCard({ happy, onEdit, onDelete, isNew = false, onTagClick }: HappyCardProps) {
+export function HappyCard({
+    happy,
+    onEdit,
+    onDelete,
+    isNew = false,
+    onTagClick,
+    focusActions = false,
+    onActionsFocused,
+}: HappyCardProps) {
     const mood = moodFor(happy.mood)
     const time = timeOf(happy.createdAt)
+    const actionsRef = useRef<HTMLButtonElement>(null)
+
+    useEffect(() => {
+        if (!focusActions) return
+        actionsRef.current?.focus()
+        onActionsFocused?.()
+    }, [focusActions, onActionsFocused])
 
     return (
         <article
@@ -60,7 +87,7 @@ export function HappyCard({ happy, onEdit, onDelete, isNew = false, onTagClick }
                 </p>
                 {(onEdit || onDelete) && (
                     <div className="shrink-0">
-                        <ActionMenu label="Actions for this happy">
+                        <ActionMenu label="Actions for this happy" triggerRef={actionsRef}>
                             {onEdit && (
                                 <ActionMenuItem onSelect={() => onEdit(happy)} icon={<PencilIcon className="h-4 w-4" />}>
                                     Edit

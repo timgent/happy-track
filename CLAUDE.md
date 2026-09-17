@@ -203,6 +203,36 @@ The same principle applies to the insights page: it withholds any claim it does
 not have the data for (`MIN_FOR_A_CLAIM`), and states counts rather than
 percentages, because a percentage reads as a grade.
 
+## Editing happens where the happy is
+
+The composer that edits a happy renders in that happy's own place in the list,
+not at the top of the page. Three things depend on that:
+
+- **The editor has to be where the reader was looking.** The journal is as long
+  as the user's history, so an editor above the day groups is off-screen for
+  every entry but the first — and the composer declines to autofocus on a phone
+  (deliberately: see `HappyComposer`), so nothing scrolled to it either. Edit
+  looked like a dead button. An edit *is* now autofocused on every device,
+  because the rule is about a box that grabs the keyboard on the way past, and
+  someone who tapped Edit asked for it by name.
+- **One editor per happy, inside the keyed `<li>`.** A single composer at a
+  fixed position is reconciled rather than remounted when the subject changes,
+  and the composer seeds its fields from `editing` on mount only. So choosing
+  Edit on a second happy mid-edit left the first one's text in the box and
+  wrote it over the second on save. Rendering the editor where the card was is
+  what makes a change of subject a remount rather than a rename.
+- **Closing an editor has to hand focus back.** The kebab that opened it lives
+  on the card the editor replaced, so Radix has nothing to return focus to and
+  it lands on `<body>`. `HappyCard.focusActions` is the handshake that puts it
+  back on the card it came from.
+
+An editor inside the list also cannot outlive the list: the journal closes one
+whose happy a search or a month change has filtered out, rather than leaving it
+to reappear half-typed when the filter clears.
+
+`journal.test.tsx`, `today.test.tsx`, `HappyComposer.test.tsx` and e2e suite B's
+small-screen test pin all of it.
+
 ## Charts
 
 `src/components/Charts.tsx`. Every chart plots one series, so colour carries no

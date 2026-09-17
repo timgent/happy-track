@@ -63,6 +63,9 @@ export function TodayPage() {
     } = useHappies()
 
     const [editing, setEditing] = useState<Happy | null>(null)
+    // See `HappyCard.focusActions`: editing swaps the card for the composer, so
+    // the kebab that opened the editor no longer exists when it closes.
+    const [focusAfterEdit, setFocusAfterEdit] = useState<string | null>(null)
     const [pendingDelete, setPendingDelete] = useState<Happy | null>(null)
     const [justSavedId, setJustSavedId] = useState<string | null>(null)
     const [isComposerOpen, setIsComposerOpen] = useState(true)
@@ -101,10 +104,15 @@ export function TodayPage() {
         }
     }
 
+    const closeEditor = () => {
+        setFocusAfterEdit(editing?.id ?? null)
+        setEditing(null)
+    }
+
     const handleEdit = async (draft: ComposerDraft) => {
         if (!editing) return
         await saveHappy(editedHappy(editing, draft))
-        setEditing(null)
+        closeEditor()
         showToast('Happy updated', 'success')
     }
 
@@ -145,18 +153,7 @@ export function TodayPage() {
 
             {isCheckingPod && todaysHappies.length === 0 && <PodSyncIndicator subject="today" />}
 
-            {editing ? (
-                <HappyComposer
-                    dateKey={editing.date}
-                    editing={editing}
-                    showMood={settings.moodEnabled}
-                    showPrompt={false}
-                    knownTags={knownTags}
-                    onSave={handleEdit}
-                    onCancel={() => setEditing(null)}
-                    autoFocus
-                />
-            ) : isComposerOpen ? (
+            {isComposerOpen ? (
                 <HappyComposer
                     dateKey={today}
                     showMood={settings.moodEnabled}
@@ -181,16 +178,31 @@ export function TodayPage() {
                     <ul className="space-y-3">
                         {todaysHappies.map(happy => (
                             <li key={happy.id}>
-                                <HappyCard
-                                    happy={happy}
-                                    isNew={happy.id === justSavedId}
-                                    onEdit={setEditing}
-                                    onDelete={setPendingDelete}
-                                    // A tag does the same thing wherever it is
-                                    // shown: it takes you to everything
-                                    // carrying it.
-                                    onTagClick={tag => navigate(`/journal?tag=${encodeURIComponent(tag)}`)}
-                                />
+                                {editing?.id === happy.id ? (
+                                    <HappyComposer
+                                        dateKey={happy.date}
+                                        editing={happy}
+                                        showMood={settings.moodEnabled}
+                                        showPrompt={false}
+                                        knownTags={knownTags}
+                                        onSave={handleEdit}
+                                        onCancel={closeEditor}
+                                        autoFocus
+                                    />
+                                ) : (
+                                    <HappyCard
+                                        happy={happy}
+                                        isNew={happy.id === justSavedId}
+                                        onEdit={setEditing}
+                                        onDelete={setPendingDelete}
+                                        // A tag does the same thing wherever it
+                                        // is shown: it takes you to everything
+                                        // carrying it.
+                                        onTagClick={tag => navigate(`/journal?tag=${encodeURIComponent(tag)}`)}
+                                        focusActions={focusAfterEdit === happy.id}
+                                        onActionsFocused={() => setFocusAfterEdit(null)}
+                                    />
+                                )}
                             </li>
                         ))}
                     </ul>
