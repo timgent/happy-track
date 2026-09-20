@@ -92,11 +92,30 @@ The app is offline-first, and the claim is on the front page, so it is load-bear
   sign-in sync runs once per identity. It is the other half of what the offline
   banner promises in so many words.
 
-One honest limitation: the **web** build ships no service worker, so a browser
-with no connection cannot fetch the bundle and therefore cannot cold-start. The
-native shells serve the bundle from the device, so for them only the pod is
-missing. E2E suite G models the native case by blocking the pod origin rather
-than all network (see `blockPod`).
+The **web** build is also a PWA: `src/pwa/pwaPlugin.ts` (shared by `vite.config.ts`
+and `vitest.config.ts`) precaches the app shell so a browser that has opened
+the app at least once can cold-start with no connection at all, and Android's
+install prompt has a manifest (`src/pwa/manifest.ts`) to offer. Two decisions
+worth keeping:
+
+- **Registration is manual, and skipped on the native shells.** `injectRegister:
+  false` plus `UpdateAvailableBanner` registering the service worker itself,
+  guarded by `!Capacitor.isNativePlatform()` in `App.tsx`. The Capacitor shells
+  already serve their bundle from the device; a second, browser-shaped cache on
+  top of it would be pure downside — one more place a stale asset could hide,
+  for an offline gap that shell doesn't have.
+- **Updates prompt rather than reload.** `registerType: 'prompt'`, not
+  `autoUpdate`. `HappyComposer` only saves on submit, so an unprompted reload
+  lands mid-keystroke as a silent loss of whatever had not yet been sent.
+  `UpdateAvailableBanner` waits for the person to click Reload; dismissing it
+  costs nothing because the app keeps running the version already loaded.
+
+The residual limitation is smaller but not gone: the very first visit still
+needs a network to fetch anything at all, and the service worker only takes
+over once that first visit has installed it. The native shells never had that
+gap — their bundle ships in the app — so for them only the pod is missing. E2E
+suite G models the native case by blocking the pod origin rather than all
+network (see `blockPod`).
 
 ## Sync: both sides are writable
 

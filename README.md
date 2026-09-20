@@ -47,6 +47,15 @@ needs, and asserts against the actual Turtle the app writes to a pod — includi
 the two-device cases (a write arriving while the app is open) and the offline
 ones (writing with no connection, and a cold start that cannot reach the pod).
 
+## Installing on Android
+
+The web build is a PWA: open it in Chrome on Android, then use the menu's
+"Add to Home screen" (Chrome may also offer an install banner on its own). It
+launches full-screen from the home screen icon and, once you've opened it
+online at least once, works offline too. There's also a native Capacitor
+build in `android/` for the Play Store; the PWA is the quicker way to get it
+on your own phone.
+
 ## How it is put together
 
 A front-end-only React app: Vite, TypeScript, Tailwind v4, PouchDB on the device,
