@@ -4,11 +4,18 @@
 <head>
   <meta charset="UTF-8" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/manifest.webmanifest" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <!-- The nav is the same deep plum in both themes, so the browser and native
        shells get one colour rather than a pair that would have to be kept in
        step with the theme. -->
   <meta name="theme-color" content="#2e1065" />
+  <!-- iOS ignores the manifest's display:standalone unless told separately;
+       Android reads the manifest and does not need these. -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Happy Track" />
   <title>Happy Track</title>
   <meta name="description"
     content="Write down one happy thing each day. Your entries live in your own Solid Pod, and the app works offline." />

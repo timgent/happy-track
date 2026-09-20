@@ -1,9 +1,11 @@
 import { Analytics } from '@vercel/analytics/react'
+import { Capacitor } from '@capacitor/core'
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { Navigation } from './components/Navigation'
 import { Footer } from './components/Footer'
 import { SessionExpiredBanner } from './components/SessionExpiredBanner'
 import { OfflineBanner } from './components/OfflineBanner'
+import { UpdateAvailableBanner } from './components/UpdateAvailableBanner'
 import { ToastProvider } from './components/ToastContext'
 import { ThemeProvider } from './components/ThemeContext'
 import { SolidPodProvider, useSolidPod } from './components/SolidPodContext'
@@ -42,6 +44,10 @@ function App() {
                 <Navigation />
                 <SessionExpiredBanner />
                 <OfflineBanner />
+                {/* The native shells serve their bundle from the device and
+                    register no service worker (see src/pwa/pwaPlugin.ts), so
+                    there is never anything for this banner to say there. */}
+                {!Capacitor.isNativePlatform() && <UpdateAvailableBanner />}
                 <div className="container mx-auto flex-1 px-4 py-8">
                   <Routes>
                     <Route path="/" element={<DefaultRedirect />} />
