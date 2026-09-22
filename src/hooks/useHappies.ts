@@ -188,7 +188,14 @@ export function useHappies(monthKey: string = thisMonthKey()): UseHappiesState {
             // may have merged something into it since the last render, and
             // writing a stale copy would drop it.
             const current = (await db.getMonth(targetKey)) ?? emptyMonth(targetKey)
-            const saved = await saveWithSyncPrevention(change(current), saveToPod)
+            // `saveToPod` is bound to `monthKey` — the month this hook polls —
+            // which is not `targetKey` when the happy being edited belongs to a
+            // different month (editing an old entry from the journal, say).
+            // Pushing through the unqualified `saveToPod` would PUT this data at
+            // the active month's URL, overwriting whatever that month actually
+            // holds on the pod with a document that describes a different one.
+            const pushToTargetMonth = (data: HappyMonth) => saveToPod(data, { resourceId: targetKey })
+            const saved = await saveWithSyncPrevention(change(current), pushToTargetMonth)
             if (saved) putMonth(saved)
         },
         [db, putMonth, saveWithSyncPrevention, saveToPod],
