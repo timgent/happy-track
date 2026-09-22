@@ -100,6 +100,14 @@ export interface SaveToPodOptions {
    * and pushes that.
    */
   onlyIfUnchanged?: boolean;
+
+  /**
+   * Overrides which resource this save targets, for a write whose data
+   * belongs to a different resource than the one `pathConfig.resourceId`
+   * names — e.g. editing a month other than the one this hook is polling.
+   * Defaults to `pathConfig.resourceId`.
+   */
+  resourceId?: string;
 }
 
 export interface PodSyncState<T> {
@@ -215,8 +223,9 @@ export function usePodSync<T>(options: PodSyncOptions<T>): PodSyncState<T> {
   /**
    * Resolve the full file URL from the path configuration
    */
-  const getFileUrl = useCallback((podUrl: string): string | null => {
-    const { container, filename, resourceId } = pathConfigRef.current;
+  const getFileUrl = useCallback((podUrl: string, resourceIdOverride?: string): string | null => {
+    const { container, filename, resourceId: defaultResourceId } = pathConfigRef.current;
+    const resourceId = resourceIdOverride ?? defaultResourceId;
 
     // If filename is a function, we need a resourceId
     if (typeof filename === 'function') {
@@ -311,7 +320,7 @@ export function usePodSync<T>(options: PodSyncOptions<T>): PodSyncState<T> {
     try {
       const podUrl = pathConfigRef.current.podUrl ?? await requirePodUrl(session);
 
-      const fileUrl = getFileUrl(podUrl);
+      const fileUrl = getFileUrl(podUrl, saveOptions?.resourceId);
 
       if (!fileUrl) {
         throw new Error('Cannot save: missing resource ID');
