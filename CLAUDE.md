@@ -63,7 +63,11 @@ keep:
   registration — and a registration the provider reclaims answers the next
   refresh with `invalid_client`, which is terminal. `solidClientIdentity.ts`
   decides this, and `public/client-id.json` must keep listing the native
-  redirect URI or the mobile app cannot sign in at all.
+  redirect URI or the mobile app cannot sign in at all. The deployed web origin
+  is pinned to the hosted document in code too, not only via
+  `VITE_CLIENT_ID_URL`: production was built without that variable from 12 to
+  16 September 2026, and every session signed in then ended `invalid_client`.
+  `auth_client` on a "Solid session ended" report says which kind of client it was.
 
 A fourth rule follows from the first: **a session that cannot be reached is not a
 session that has ended.** `isReconnecting` (`SolidPodContext`) is that state, and

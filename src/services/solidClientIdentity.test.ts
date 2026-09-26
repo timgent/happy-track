@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import {
     HOSTED_CLIENT_ID_URL,
+    HOSTED_CLIENT_ORIGIN,
     NATIVE_REDIRECT_URI,
     solidClientDetails,
 } from './solidClientIdentity'
@@ -25,6 +26,16 @@ import {
 describe('solidClientDetails', () => {
     it('uses the hosted Client ID Document in the native app', () => {
         expect(solidClientDetails({ isNativePlatform: true, origin: 'https://localhost' }))
+            .toEqual({ client_id: HOSTED_CLIENT_ID_URL })
+    })
+
+    it('uses the hosted Client ID Document on the production site even when the build sets nothing', () => {
+        // Production ran as a dynamic client from 12 to 16 September 2026 because
+        // the Vercel build had no VITE_CLIENT_ID_URL, and every session signed in
+        // during that window ended `invalid_client` once Inrupt reaped the
+        // registration (Sentry JAVASCRIPT-REACT-16). The deployed origin already
+        // says which document it serves; a missing build variable must not undo that.
+        expect(solidClientDetails({ isNativePlatform: false, origin: HOSTED_CLIENT_ORIGIN }))
             .toEqual({ client_id: HOSTED_CLIENT_ID_URL })
     })
 
@@ -57,6 +68,12 @@ describe('the hosted Client ID Document', () => {
 
     it('is the document the native app claims to be', () => {
         expect(document.client_id).toBe(HOSTED_CLIENT_ID_URL)
+    })
+
+    it('lists the production site as a redirect URI', () => {
+        // The web app redirects back to its own root, so claiming the document
+        // there is only sound while the document lists that root.
+        expect(document.redirect_uris).toContain(`${HOSTED_CLIENT_ORIGIN}/`)
     })
 
     it('lists the redirect URI the native shell sends', () => {
