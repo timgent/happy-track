@@ -1,6 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { generateKeyPair, exportJWK, SignJWT, calculateJwkThumbprint, createLocalJWKSet } from 'jose'
+import { captureMessage } from '@sentry/react'
 import { ResilientSession, SessionEndedError, type ResilientSessionOptions } from './ResilientSession'
+
+vi.mock('@sentry/react', () => ({ addBreadcrumb: vi.fn(), captureMessage: vi.fn() }))
 
 /**
  * These cover the exchange that decides whether a user stays logged in.
@@ -159,6 +162,29 @@ describe('ResilientSession', () => {
 
         await expect(session.restore()).rejects.toBeInstanceOf(SessionEndedError)
         expect(onExpiration).toHaveBeenCalledTimes(1)
+    }, 30_000)
+
+    it.each([
+        ['a Client ID Document', CLIENT_ID, 'document'],
+        ['a dynamic registration', 'c4a3e7f0-dynamic-registration', 'dynamic'],
+    ])('reports which kind of client the provider disowned when the session was %s', async (_, clientId, kind) => {
+        // `invalid_client` means one thing for a hosted document (the provider could
+        // not read it) and quite another for a dynamic registration (the provider
+        // reaped it). Production was once a dynamic client by accident, and the
+        // report could not say so; the stored client id can.
+        db.items.set('client_id', clientId)
+        vi.stubGlobal('fetch', vi.fn(async () => new Response(
+            JSON.stringify({ error: 'invalid_client' }),
+            { status: 401, headers: { 'Content-Type': 'application/json' } },
+        )))
+
+        const session = makeSession(db)
+        await expect(session.restore()).rejects.toBeInstanceOf(SessionEndedError)
+
+        expect(vi.mocked(captureMessage)).toHaveBeenCalledWith('Solid session ended: invalid_client', {
+            level: 'error',
+            tags: { auth_session_ended: 'invalid_client', auth_client: kind },
+        })
     }, 30_000)
 
     it('retries a 503 rather than treating it as the end of the session', async () => {

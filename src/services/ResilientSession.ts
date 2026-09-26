@@ -8,7 +8,7 @@ import {
     calculateJwkThumbprint,
     type JWTVerifyGetKey,
 } from 'jose'
-import { logAuthEvent, reportSessionEnded } from './authLog'
+import { logAuthEvent, reportSessionEnded, type ClientKind } from './authLog'
 
 /**
  * A SessionCore that treats "I could not reach the token endpoint" and
@@ -78,10 +78,25 @@ const REFRESH_LOCK = 'ht-solid-token-refresh'
  */
 export class SessionEndedError extends Error {
     readonly reason: string
+    /** What the session was signed in as, when that is known. */
+    client?: ClientKind
     constructor(reason: string, message?: string) {
         super(message ?? `Solid session ended: ${reason}`)
         this.name = 'SessionEndedError'
         this.reason = reason
+    }
+}
+
+/**
+ * A Client ID Document is identified by its URL; a dynamic registration by
+ * whatever opaque id the provider handed back.
+ */
+function clientKindOf(clientId: string): ClientKind {
+    try {
+        new URL(clientId)
+        return 'document'
+    } catch {
+        return 'dynamic'
     }
 }
 
@@ -240,7 +255,7 @@ export class ResilientSession extends SessionCore {
                 // failure leaves the stored refresh token intact for the next attempt,
                 // and books that attempt rather than hoping something else will.
                 if (ended) {
-                    reportSessionEnded(error.reason)
+                    reportSessionEnded(error.reason, error.client)
                     this.dispatchExpirationEvent()
                 } else {
                     this.scheduleTransientRetry()
@@ -401,7 +416,9 @@ export class ResilientSession extends SessionCore {
             }
 
             if (!response.ok) {
-                throw classifyTokenError(response.status, await response.text().catch(() => ''))
+                const error = classifyTokenError(response.status, await response.text().catch(() => ''))
+                if (error instanceof SessionEndedError) error.client = clientKindOf(clientId)
+                throw error
             }
 
             const tokens = (await response.json()) as TokenResponse

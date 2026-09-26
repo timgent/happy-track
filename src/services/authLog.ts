@@ -78,20 +78,25 @@ export function logAuthEvent(
     }
 }
 
+/** Whether a session was signed in with the hosted Client ID Document or a dynamic registration. */
+export type ClientKind = 'document' | 'dynamic'
+
 /**
  * Reports a session that genuinely ended, so it is visible without the device.
  *
  * The local log answers "why was I signed out?" only for someone holding the
  * phone. A session ending is not an error anything throws, so nothing reached
  * Sentry either, and the mobile app's expiries were invisible. This sends the
- * one fact that separates a dead grant from a stale client registration — the
- * reason — and nothing that identifies the user.
+ * facts that separate a dead grant from a stale client registration — the
+ * reason, and which kind of client the session was — and nothing that
+ * identifies the user. The kind is what `invalid_client` needs to be read at
+ * all: production was a dynamic client for four days before anyone could tell.
  */
-export function reportSessionEnded(reason: string): void {
+export function reportSessionEnded(reason: string, client?: ClientKind): void {
     try {
         captureMessage(`Solid session ended: ${reason}`, {
             level: 'error',
-            tags: { auth_session_ended: reason },
+            tags: { auth_session_ended: reason, ...(client ? { auth_client: client } : {}) },
         })
     } catch {
         // Sentry not initialised (tests, local dev) — the local log is what matters.

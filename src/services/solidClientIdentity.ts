@@ -33,6 +33,14 @@
 export const HOSTED_CLIENT_ID_URL = 'https://happytrack.tim-gent.com/client-id.json'
 
 /**
+ * The origin that serves the hosted document — the deployed site itself. A page
+ * loaded from here is the client the document describes, whatever the build was
+ * told; production ran as a dynamic client for four days because a build
+ * variable was missing, and every session signed in then ended `invalid_client`.
+ */
+export const HOSTED_CLIENT_ORIGIN = new URL(HOSTED_CLIENT_ID_URL).origin
+
+/**
  * The redirect URI the native shell sends. Capacitor serves the app over its
  * https scheme on both platforms (see `capacitor.config.ts`), so iOS and Android
  * share one loopback origin. `public/client-id.json` must list this, or the
@@ -55,9 +63,9 @@ export function solidClientDetails({
     origin: string
 }): SolidClientDetails {
     if (clientIdUrl) return { client_id: clientIdUrl }
-    if (isNativePlatform) return { client_id: HOSTED_CLIENT_ID_URL }
+    if (isNativePlatform || origin === HOSTED_CLIENT_ORIGIN) return { client_id: HOSTED_CLIENT_ID_URL }
 
-    // A web origin with no hosted document — localhost or a preview deploy.
+    // Any other web origin has no hosted document — localhost or a preview deploy.
     // Dynamic registration is the only option, and its fragility matters less
     // here: these sessions are minutes old and re-logging in costs nothing.
     //
